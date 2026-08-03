@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PaperTrade — Virtual Stock Trading Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- AUTH SECTION (Login / Register) -->
+  <div id="auth-screen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="brand-header">
+        <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <h1>PaperTrade</h1>
+        <p>Virtual Stock Trading Simulator</p>
+      </div>
+
+      <!-- Segmented Auth Switcher -->
+      <div class="auth-tabs">
+        <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">
+          <i class="fa-solid fa-right-to-bracket"></i> Login
+        </button>
+        <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">
+          <i class="fa-solid fa-user-plus"></i> Register
+        </button>
+      </div>
+
+      <!-- Error / Success Alert Box -->
+      <div id="auth-alert" class="alert hidden"></div>
+
+      <!-- LOGIN FORM -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-username"><i class="fa-solid fa-user"></i> Username</label>
+          <input type="text" id="login-username" placeholder="Enter your username" required autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <span>Log In to Dashboard</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-username"><i class="fa-solid fa-user"></i> Username</label>
+          <input type="text" id="reg-username" placeholder="Choose a username" required minlength="3" />
+        </div>
+        <div class="form-group">
+          <label for="reg-email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="reg-email" placeholder="name@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-password"><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="reg-password" placeholder="Create a strong password" required minlength="4" />
+        </div>
+        <div class="bonus-badge">
+          <i class="fa-solid fa-gift"></i> Includes <strong>$100,000.00</strong> Virtual Cash Balance!
+        </div>
+        <button type="submit" class="btn btn-success btn-block">
+          <span>Create Free Account</span> <i class="fa-solid fa-user-check"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP DASHBOARD (Protected) -->
+  <div id="app-screen" class="app-wrapper hidden">
+    <!-- Top Header -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="brand-icon sm"><i class="fa-solid fa-chart-line"></i></div>
+        <span class="brand-title">PaperTrade</span>
+      </div>
+
+      <div class="nav-user-info">
+        <div class="user-chip">
+          <i class="fa-solid fa-circle-user"></i>
+          <span id="user-display-name">Trader</span>
+        </div>
+        <button onclick="logout()" class="btn btn-secondary btn-sm" title="Log Out">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="dashboard-container">
+      <!-- Metrics Overview Bar -->
+      <div class="metrics-grid">
+        <div class="metric-card glow-blue">
+          <div class="metric-icon"><i class="fa-solid fa-vault"></i></div>
+          <div class="metric-details">
+            <span class="metric-label">Net Worth</span>
+            <span id="metric-net-worth" class="metric-value">$100,000.00</span>
+          </div>
+        </div>
+
+        <div class="metric-card glow-emerald">
+          <div class="metric-icon"><i class="fa-solid fa-wallet"></i></div>
+          <div class="metric-details">
+            <span class="metric-label">Available Cash Balance</span>
+            <span id="metric-cash-balance" class="metric-value">$100,000.00</span>
+          </div>
+        </div>
+
+        <div class="metric-card glow-purple">
+          <div class="metric-icon"><i class="fa-solid fa-chart-pie"></i></div>
+          <div class="metric-details">
+            <span class="metric-label">Invested Value</span>
+            <span id="metric-invested-val" class="metric-value">$0.00</span>
+          </div>
+        </div>
+
+        <div class="metric-card glow-gold">
+          <div class="metric-icon"><i class="fa-solid fa-award"></i></div>
+          <div class="metric-details">
+            <span class="metric-label">Badges Earned</span>
+            <span id="metric-badges-count" class="metric-value">0 Badges</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Grid (2 Columns) -->
+      <div class="dashboard-grid">
+        <!-- Left Column: Trading Terminal & Watchlist -->
+        <div class="grid-column">
+          <!-- Trading Terminal Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2><i class="fa-solid fa-arrow-trend-up"></i> Live Trade Terminal</h2>
+              <button onclick="refreshData()" class="btn-icon" title="Refresh Live Data">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </div>
+
+            <div class="trade-terminal">
+              <!-- Stock Search Bar -->
+              <div class="search-box">
+                <input type="text" id="trade-symbol-input" placeholder="e.g. AAPL, TSLA, MSFT, TCS.NS" uppercase />
+                <button onclick="fetchStockPrice()" class="btn btn-primary btn-sm">
+                  <i class="fa-solid fa-magnifying-glass"></i> Quote
+                </button>
+              </div>
+
+              <!-- Popular Quick Tickers -->
+              <div class="quick-tickers">
+                <span class="quick-label">Popular:</span>
+                <button onclick="selectTicker('AAPL')" class="ticker-pill">AAPL</button>
+                <button onclick="selectTicker('TSLA')" class="ticker-pill">TSLA</button>
+                <button onclick="selectTicker('MSFT')" class="ticker-pill">MSFT</button>
+                <button onclick="selectTicker('NVDA')" class="ticker-pill">NVDA</button>
+                <button onclick="selectTicker('RELIANCE.NS')" class="ticker-pill">RELIANCE.NS</button>
+              </div>
+
+              <!-- Price Box -->
+              <div id="price-display-box" class="price-display">
+                <div class="price-symbol" id="quote-symbol">---</div>
+                <div class="price-amount" id="quote-price">$0.00</div>
+                <div class="price-status" id="quote-status">Enter a ticker symbol above</div>
+              </div>
+
+              <!-- Quantity Selector -->
+              <div class="form-group">
+                <label for="trade-qty">Quantity of Shares</label>
+                <input type="number" id="trade-qty" value="1" min="1" oninput="updateEstimatedTotal()" />
+              </div>
+
+              <!-- Estimated Order Cost -->
+              <div class="order-summary">
+                <span>Estimated Total Cost:</span>
+                <strong id="estimated-cost">$0.00</strong>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="trade-actions">
+                <button onclick="executeTrade('BUY')" class="btn btn-emerald btn-block">
+                  <i class="fa-solid fa-cart-shopping"></i> BUY STOCK
+                </button>
+                <button onclick="executeTrade('SELL')" class="btn btn-rose btn-block">
+                  <i class="fa-solid fa-money-bill-transfer"></i> SELL STOCK
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Watchlist Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2><i class="fa-solid fa-eye"></i> Tracked Watchlist</h2>
+              <button onclick="addCurrentToWatchlist()" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-plus"></i> Add Current
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Live Price</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="watchlist-tbody">
+                  <tr><td colspan="3" class="empty-state">Your watchlist is empty. Search and add symbols above.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Portfolio Holdings, Leaderboard, Badges, Transactions -->
+        <div class="grid-column">
+          <!-- Portfolio Holdings Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2><i class="fa-solid fa-briefcase"></i> Active Portfolio Holdings</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Shares</th>
+                    <th>Avg Price</th>
+                    <th>Current</th>
+                    <th>Value</th>
+                    <th>P&L ($ / %)</th>
+                  </tr>
+                </thead>
+                <tbody id="holdings-tbody">
+                  <tr><td colspan="6" class="empty-state">No holdings yet. Buy your first stock from the Live Trade Terminal!</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tabs for Leaderboard, Badges, Audit Log -->
+          <div class="card">
+            <div class="tab-header">
+              <button id="subtab-leaderboard" class="subtab-btn active" onclick="switchSubtab('leaderboard')">
+                <i class="fa-solid fa-trophy"></i> Leaderboard
+              </button>
+              <button id="subtab-badges" class="subtab-btn" onclick="switchSubtab('badges')">
+                <i class="fa-solid fa-medal"></i> Achievements
+              </button>
+              <button id="subtab-history" class="subtab-btn" onclick="switchSubtab('history')">
+                <i class="fa-solid fa-clock-rotate-left"></i> Trade History
+              </button>
+            </div>
+
+            <div class="subtab-body">
+              <!-- LEADERBOARD SUBTAB -->
+              <div id="panel-leaderboard" class="tab-panel">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>User</th>
+                        <th>Cash</th>
+                        <th>Invested</th>
+                        <th>Net Worth</th>
+                      </tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody">
+                      <tr><td colspan="5" class="empty-state">Loading leaderboard...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- BADGES SUBTAB -->
+              <div id="panel-badges" class="tab-panel hidden">
+                <div id="badges-grid" class="badges-grid">
+                  <!-- Dynamically populated badges -->
+                </div>
+              </div>
+
+              <!-- HISTORY SUBTAB -->
+              <div id="panel-history" class="tab-panel hidden">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Symbol</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                      </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                      <tr><td colspan="5" class="empty-state">No transactions recorded yet.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
