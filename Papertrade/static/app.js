@@ -92,6 +92,7 @@ async function handleLogin(e) {
   } catch (err) {
     alertBox.textContent = err.message;
     alertBox.className = "alert alert-error";
+    alertBox.classList.remove("hidden");
   }
 }
 
@@ -104,6 +105,14 @@ async function handleRegister(e) {
 
   alertBox.classList.add("hidden");
 
+  // Password length validation (72 bytes max for bcrypt)
+  if (password.length > 72) {
+    alertBox.textContent = "Password must be 72 characters or less";
+    alertBox.className = "alert alert-error";
+    alertBox.classList.remove("hidden");
+    return;
+  }
+
   try {
     const res = await fetch(`${API_BASE}/auth/signup`, {
       method: "POST",
@@ -111,9 +120,18 @@ async function handleRegister(e) {
       body: JSON.stringify({ username, email, password })
     });
 
-    const data = await res.json();
+    // Check if response is JSON
+    const contentType = res.headers.get("content-type");
+    let data;
+    
+    if (contentType && contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      throw new Error("Invalid response from server");
+    }
+
     if (!res.ok) {
-      throw new Error(data.detail || "Registration failed");
+      throw new Error(data.detail || data.message || "Registration failed");
     }
 
     showToast("Account created successfully! Logging you in...", "success");
@@ -137,10 +155,13 @@ async function handleRegister(e) {
       localStorage.setItem("papertrade_token", activeToken);
       localStorage.setItem("papertrade_user", activeUser);
       initApp();
+    } else {
+      throw new Error(loginData.detail || "Auto-login failed");
     }
   } catch (err) {
     alertBox.textContent = err.message;
     alertBox.className = "alert alert-error";
+    alertBox.classList.remove("hidden");
   }
 }
 
