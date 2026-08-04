@@ -120,14 +120,14 @@ async function handleRegister(e) {
       body: JSON.stringify({ username, email, password })
     });
 
-    // Check if response is JSON
+    // Check if response is JSON before parsing
     const contentType = res.headers.get("content-type");
     let data;
     
     if (contentType && contentType.includes("application/json")) {
       data = await res.json();
     } else {
-      throw new Error("Invalid response from server");
+      throw new Error("Server returned invalid response");
     }
 
     if (!res.ok) {
